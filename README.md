@@ -16,11 +16,54 @@ stable, distinct color with nothing to configure.
 
 ```
   LINK GO
-Sonnet | main | ctx 12%
+Sonnet | main | ctx 12% | ● qa-fix
 ```
 
-in a different color per repo, plus the model, current git branch and
-context-window usage on the second line.
+in a different color per repo, plus the model, current git branch,
+context-window usage and a session tag on the second line.
+
+## Clickable
+
+The banner is a clickable link (Cmd+click on macOS, Ctrl+click on
+Windows/Linux, in terminals that support it — iTerm2, Kitty, WezTerm, the
+VS Code integrated terminal). It opens:
+
+1. The session's open pull request, if there is one, or otherwise
+2. The repository's homepage, derived from the git origin remote, or
+   otherwise
+3. Nothing — the banner stays plain text when neither is known (for
+   example, outside a GitHub/GitLab-backed repo).
+
+## Telling sessions apart within the same project
+
+The `● tag` on the second line is a per-session accent, colored from a
+hash of the session id so it stays stable but differs between sessions:
+
+* Run `/rename <name>` in a session and that name shows up as the tag —
+  the quickest way to make a specific session self-explanatory (e.g.
+  `/rename qa-fix`).
+* Leave it unrenamed and you still get a colored dot plus the first
+  characters of the session id, enough to tell two sessions in the same
+  repo apart even without naming them.
+
+## Per-session overrides
+
+Set these before starting `claude` in a given terminal to override what
+that one session shows, on top of everything above:
+
+| Variable | Overrides |
+| --- | --- |
+| `CLAUDE_BANNER_LABEL` | The big banner text |
+| `CLAUDE_BANNER_COLOR` | The banner's background color (a 256-color code) |
+| `CLAUDE_BANNER_URL` | Where clicking the banner goes |
+
+```bash
+CLAUDE_BANNER_LABEL="OVERBOARDS · TASKS QA" CLAUDE_BANNER_COLOR=208 claude
+```
+
+Since they're plain environment variables, they apply only to the shell
+(and the `claude` process it starts) where you export them — a natural
+fit for "this one terminal tab is special."
 
 ## Install
 

@@ -45,6 +45,30 @@ hash of the session id so it stays stable but differs between sessions:
 * Leave it unrenamed and you still get a colored dot plus the first
   characters of the session id, enough to tell two sessions in the same
   repo apart even without naming them.
+* Run `/banner` for full control — see below.
+
+## `/banner`: pick a color and names for this session
+
+A terminal hyperlink can only ever open a URL — it cannot pop up a color
+picker or a text field in place, so "click to customize" isn't something
+any terminal supports. `/banner` is the practical equivalent: type it in
+a session and it asks you (through Claude Code's own picker UI) for:
+
+* a background color, from a fixed palette,
+* a custom name for the big banner line (normally the project name), and
+* a custom name for the session tag on the second line,
+
+each answerable in one keypress, or "Other" to type your own text. It
+writes the choice to
+`~/.claude/session-banner-overrides/<session_id>.json`, scoped to that
+one session only — every other session, in this project or any other,
+is unaffected. Picking "Automático" for any of the three clears that
+part of the override again.
+
+The command is installed as a Claude Code skill at
+`~/.claude/skills/banner`, symlinked to `skills/banner/` in this
+checkout by `install.sh`, so it works in every project, the same way the
+statusLine itself does.
 
 ## Per-session overrides
 

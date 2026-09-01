@@ -17,18 +17,30 @@ PR_URL=$(jq -r '.pr.url // empty' <<<"$input")
 SESSION_ID=$(jq -r '.session_id // empty' <<<"$input")
 SESSION_NAME=$(jq -r '.session_name // empty' <<<"$input")
 
+# Per-session choices made through the /banner command, keyed by session id.
+OVERRIDE_FILE="$HOME/.claude/session-banner-overrides/${SESSION_ID}.json"
+OVERRIDE_COLOR=""
+OVERRIDE_PROJECT_LABEL=""
+OVERRIDE_SESSION_LABEL=""
+if [ -n "$SESSION_ID" ] && [ -f "$OVERRIDE_FILE" ]; then
+    OVERRIDE_COLOR=$(jq -r '.color // empty' "$OVERRIDE_FILE" 2>/dev/null || true)
+    OVERRIDE_PROJECT_LABEL=$(jq -r '.project_label // empty' "$OVERRIDE_FILE" 2>/dev/null || true)
+    OVERRIDE_SESSION_LABEL=$(jq -r '.session_label // empty' "$OVERRIDE_FILE" 2>/dev/null || true)
+fi
+
 NAME="$REPO_NAME"
 if [ -z "$NAME" ]; then
     NAME=$(basename "${DIR:-unknown}")
 fi
-LABEL="${CLAUDE_BANNER_LABEL:-$(tr '[:lower:]' '[:upper:]' <<<"${NAME//[-_]/ }")}"
+DEFAULT_LABEL=$(tr '[:lower:]' '[:upper:]' <<<"${NAME//[-_]/ }")
+LABEL="${CLAUDE_BANNER_LABEL:-${OVERRIDE_PROJECT_LABEL:-$DEFAULT_LABEL}}"
 
 # Deterministic background color per project name, picked from a palette of
 # mid-dark 256-color codes that stay readable under bold white text. This
 # needs no per-project mapping: any repo name lands on a stable color.
 PALETTE=(24 25 26 30 33 54 58 62 88 94 125 130 160 166)
 HASH=$(cksum <<<"$NAME" | cut -d' ' -f1)
-BG="${CLAUDE_BANNER_COLOR:-${PALETTE[$((HASH % ${#PALETTE[@]}))]}}"
+BG="${CLAUDE_BANNER_COLOR:-${OVERRIDE_COLOR:-${PALETTE[$((HASH % ${#PALETTE[@]}))]}}}"
 
 # A small second color, hashed from the session id, accents the session
 # line so two sessions in the same project are still visually different.
@@ -38,6 +50,7 @@ if [ -n "$SESSION_KEY" ]; then
     SHASH=$(cksum <<<"$SESSION_KEY" | cut -d' ' -f1)
     ACCENT=${PALETTE[$((SHASH % ${#PALETTE[@]}))]}
 fi
+SESSION_LABEL="${OVERRIDE_SESSION_LABEL:-$SESSION_NAME}"
 
 RESET='\033[0m'
 BANNER_TEXT="\033[48;5;${BG}m\033[97;1m  ${LABEL}  ${RESET}"
@@ -65,8 +78,8 @@ if [ -n "$DIR" ] && git -C "$DIR" rev-parse --git-dir >/dev/null 2>&1; then
 fi
 
 SESSION_TAG=""
-if [ -n "$SESSION_NAME" ]; then
-    SESSION_TAG=" | \033[38;5;${ACCENT}m● ${SESSION_NAME}${RESET}"
+if [ -n "$SESSION_LABEL" ]; then
+    SESSION_TAG=" | \033[38;5;${ACCENT}m● ${SESSION_LABEL}${RESET}"
 elif [ -n "$SESSION_ID" ]; then
     SESSION_TAG=" | \033[38;5;${ACCENT}m● ${SESSION_ID:0:7}${RESET}"
 fi

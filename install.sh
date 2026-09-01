@@ -7,10 +7,17 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 STATUSLINE_PATH="$SCRIPT_DIR/statusline.sh"
 SETTINGS_FILE="$HOME/.claude/settings.json"
+SKILL_LINK="$HOME/.claude/skills/banner"
 
 chmod +x "$STATUSLINE_PATH"
 
-mkdir -p "$HOME/.claude"
+mkdir -p "$HOME/.claude/skills"
+if [ -e "$SKILL_LINK" ] && [ ! -L "$SKILL_LINK" ]; then
+    echo "warning: $SKILL_LINK already exists and is not a symlink; leaving it alone." >&2
+    echo "         remove it and re-run this script to install the /banner command." >&2
+else
+    ln -sfn "$SCRIPT_DIR/skills/banner" "$SKILL_LINK"
+fi
 if [ ! -f "$SETTINGS_FILE" ]; then
     echo '{}' >"$SETTINGS_FILE"
 fi
@@ -24,5 +31,6 @@ jq --arg cmd "$STATUSLINE_PATH" \
 mv "$TMP" "$SETTINGS_FILE"
 
 echo "Installed. statusLine now points to $STATUSLINE_PATH"
+echo "The /banner command is linked at $SKILL_LINK"
 echo "A backup of the previous settings.json was saved alongside it."
 echo "Open or switch to any Claude Code session to see the banner."
